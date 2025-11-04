@@ -91,6 +91,7 @@ function AppContent() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const routeFetchController = useRef<AbortController | null>(null);
   const lastFetchedRouteOrigin = useRef<GeoCoordinates | null>(null);
+  const mapRef = useRef<MapView | null>(null);
   const pathCoordinates = useMemo(
     () =>
       locationTrail.map(coords => ({
@@ -336,17 +337,17 @@ function AppContent() {
     };
   }, [currentLocation]);
 
-  const region = useMemo((): Region => {
+  const handleRelocatePress = useCallback(() => {
     if (!currentLocation) {
-      return INITIAL_REGION;
+      return;
     }
 
-    return {
+    mapRef.current?.animateToRegion({
       latitude: currentLocation.latitude,
       longitude: currentLocation.longitude,
       latitudeDelta: 0.01,
       longitudeDelta: 0.01,
-    };
+    });
   }, [currentLocation]);
 
   const permissionBlockedContent = useMemo(() => {
@@ -385,11 +386,10 @@ function AppContent() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <MapView
+        ref={mapRef}
         style={StyleSheet.absoluteFill}
         initialRegion={INITIAL_REGION}
-        region={region}
         showsUserLocation
-        followsUserLocation
         showsMyLocationButton
         showsCompass
       >
@@ -417,6 +417,13 @@ function AppContent() {
           />
         )}
       </MapView>
+      <TouchableOpacity
+        accessibilityRole="button"
+        onPress={handleRelocatePress}
+        style={styles.relocateButton}
+      >
+        <Text style={styles.relocateButtonText}>Center on me</Text>
+      </TouchableOpacity>
       <View style={styles.infoCard}>
         <Text style={styles.infoTitle}>Live location</Text>
         {currentLocation ? (
@@ -589,6 +596,25 @@ const styles = StyleSheet.create({
   overlayButtonText: {
     fontSize: 16,
     color: '#fff',
+    fontWeight: '600',
+  },
+  relocateButton: {
+    position: 'absolute',
+    right: 24,
+    bottom: 150,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    backgroundColor: '#007AFF',
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
+  },
+  relocateButtonText: {
+    color: '#fff',
+    fontSize: 15,
     fontWeight: '600',
   },
 });
