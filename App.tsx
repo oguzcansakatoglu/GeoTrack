@@ -1,10 +1,3 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
 import {
   Alert,
   AppState,
@@ -18,12 +11,12 @@ import {
   View,
   useColorScheme,
 } from 'react-native';
-import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import Geolocation, {
   GeoCoordinates,
   GeolocationError,
   GeolocationOptions,
 } from 'react-native-geolocation-service';
+import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import {
   PERMISSIONS,
   PermissionStatus,
@@ -33,6 +26,13 @@ import {
   request,
   requestMultiple,
 } from 'react-native-permissions';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -422,9 +422,9 @@ function AppContent() {
         onPress={handleRelocatePress}
         style={styles.relocateButton}
       >
-        <Text style={styles.relocateButtonText}>Center on me</Text>
+        <Text style={styles.relocateButtonText}>Current</Text>
       </TouchableOpacity>
-      <View style={styles.infoCard}>
+      {/* <View style={styles.infoCard}>
         <Text style={styles.infoTitle}>Live location</Text>
         {currentLocation ? (
           <>
@@ -448,7 +448,7 @@ function AppContent() {
         ) : (
           <Text style={styles.infoText}>Locating…</Text>
         )}
-      </View>
+      </View> */}
       {permissionState === 'blocked' && permissionBlockedContent}
       {permissionState === 'pending' && loadingContent}
     </View>
@@ -600,11 +600,11 @@ const styles = StyleSheet.create({
   },
   relocateButton: {
     position: 'absolute',
-    right: 24,
-    bottom: 150,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    backgroundColor: '#007AFF',
+    right: 20,
+    top: 50,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    backgroundColor: '#000000',
     borderRadius: 999,
     shadowColor: '#000',
     shadowOpacity: 0.3,
@@ -614,8 +614,8 @@ const styles = StyleSheet.create({
   },
   relocateButtonText: {
     color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '400',
   },
 });
 
