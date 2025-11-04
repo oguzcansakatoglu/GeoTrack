@@ -326,17 +326,17 @@ function AppContent() {
     };
   }, [currentLocation]);
 
-  const region = useMemo((): Region => {
+  const handleRelocatePress = useCallback(() => {
     if (!currentLocation) {
-      return INITIAL_REGION;
+      return;
     }
 
-    return {
+    mapRef.current?.animateToRegion({
       latitude: currentLocation.latitude,
       longitude: currentLocation.longitude,
       latitudeDelta: 0.01,
       longitudeDelta: 0.01,
-    };
+    });
   }, [currentLocation]);
 
   const permissionBlockedContent = useMemo(() => {
@@ -375,11 +375,10 @@ function AppContent() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <MapView
+        ref={mapRef}
         style={StyleSheet.absoluteFill}
         initialRegion={INITIAL_REGION}
-        region={region}
         showsUserLocation
-        followsUserLocation
         showsMyLocationButton
         showsCompass
       >
@@ -401,7 +400,14 @@ function AppContent() {
           />
         )}
       </MapView>
-      <View style={styles.infoCard}>
+      <TouchableOpacity
+        accessibilityRole="button"
+        onPress={handleRelocatePress}
+        style={styles.relocateButton}
+      >
+        <Text style={styles.relocateButtonText}>Current</Text>
+      </TouchableOpacity>
+      {/* <View style={styles.infoCard}>
         <Text style={styles.infoTitle}>Live location</Text>
         {currentLocation ? (
           <>
@@ -425,7 +431,7 @@ function AppContent() {
         ) : (
           <Text style={styles.infoText}>Locating…</Text>
         )}
-      </View>
+      </View> */}
       {permissionState === 'blocked' && permissionBlockedContent}
       {permissionState === 'pending' && loadingContent}
     </View>
@@ -574,6 +580,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: '600',
+  },
+  relocateButton: {
+    position: 'absolute',
+    right: 20,
+    top: 50,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    backgroundColor: '#000000',
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
+  },
+  relocateButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '400',
   },
 });
 
