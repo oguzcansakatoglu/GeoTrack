@@ -90,6 +90,7 @@ function AppContent() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const routeFetchController = useRef<AbortController | null>(null);
   const lastFetchedRouteOrigin = useRef<GeoCoordinates | null>(null);
+  const mapRef = useRef<MapView | null>(null);
  
   const handleOpenSettings = useCallback(() => {
     openSettings().catch(() => {
@@ -407,7 +408,7 @@ function AppContent() {
       >
         <Text style={styles.relocateButtonText}>Current</Text>
       </TouchableOpacity>
-      {/* <View style={styles.infoCard}>
+      <View style={styles.infoCard}>
         <Text style={styles.infoTitle}>Live location</Text>
         {currentLocation ? (
           <>
@@ -431,7 +432,7 @@ function AppContent() {
         ) : (
           <Text style={styles.infoText}>Locating…</Text>
         )}
-      </View> */}
+      </View>
       {permissionState === 'blocked' && permissionBlockedContent}
       {permissionState === 'pending' && loadingContent}
     </View>
