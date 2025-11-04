@@ -1,10 +1,3 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
 import {
   Alert,
   AppState,
@@ -18,12 +11,12 @@ import {
   View,
   useColorScheme,
 } from 'react-native';
-import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import Geolocation, {
   GeoCoordinates,
   GeolocationError,
   GeolocationOptions,
 } from 'react-native-geolocation-service';
+import MapView, { Marker, Polyline, Region } from 'react-native-maps';
 import {
   PERMISSIONS,
   PermissionStatus,
@@ -33,6 +26,13 @@ import {
   request,
   requestMultiple,
 } from 'react-native-permissions';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -83,7 +83,6 @@ function AppContent() {
   const [currentLocation, setCurrentLocation] = useState<GeoCoordinates | null>(
     null,
   );
-  const [locationTrail, setLocationTrail] = useState<GeoCoordinates[]>([]);
   const [routeCoordinates, setRouteCoordinates] = useState<
     { latitude: number; longitude: number }[]
   >([]);
@@ -91,15 +90,7 @@ function AppContent() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const routeFetchController = useRef<AbortController | null>(null);
   const lastFetchedRouteOrigin = useRef<GeoCoordinates | null>(null);
-  const pathCoordinates = useMemo(
-    () =>
-      locationTrail.map(coords => ({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-      })),
-    [locationTrail],
-  );
-
+ 
   const handleOpenSettings = useCallback(() => {
     openSettings().catch(() => {
       if (Platform.OS === 'ios') {
@@ -202,7 +193,6 @@ function AppContent() {
 
   const handleLocationSuccess = useCallback((coords: GeoCoordinates) => {
     setCurrentLocation(coords);
-    setLocationTrail(previous => [...previous, coords]);
   }, []);
 
   const handleLocationError = useCallback((error: GeolocationError) => {
@@ -402,13 +392,7 @@ function AppContent() {
           description="Torun Center"
           pinColor="#FF6B6B"
         />
-        {pathCoordinates.length > 1 && (
-          <Polyline
-            coordinates={pathCoordinates}
-            strokeColor="#007AFF"
-            strokeWidth={4}
-          />
-        )}
+       
         {routeCoordinates.length > 1 && (
           <Polyline
             coordinates={routeCoordinates}
