@@ -53,6 +53,12 @@ const WATCH_OPTIONS: GeolocationOptions = {
   showsBackgroundLocationIndicator: true,
 };
 
+type OSRMRouteResponse = {
+  routes?: Array<{
+    geometry?: string;
+  }>;
+};
+
 const DESTINATION_COORDINATES: { latitude: number; longitude: number } = {
   latitude: 41.0655424,
   longitude: 28.9983691,
@@ -78,8 +84,13 @@ function AppContent() {
     null,
   );
   const [locationTrail, setLocationTrail] = useState<GeoCoordinates[]>([]);
+  const [routeCoordinates, setRouteCoordinates] = useState<
+    { latitude: number; longitude: number }[]
+  >([]);
   const watchId = useRef<number | null>(null);
   const appState = useRef<AppStateStatus>(AppState.currentState);
+  const routeFetchController = useRef<AbortController | null>(null);
+  const lastFetchedRouteOrigin = useRef<GeoCoordinates | null>(null);
   const pathCoordinates = useMemo(
     () =>
       locationTrail.map(coords => ({
@@ -88,20 +99,6 @@ function AppContent() {
       })),
     [locationTrail],
   );
-
-  const destinationRoute = useMemo(() => {
-    if (!currentLocation) {
-      return [];
-    }
-
-    return [
-      {
-        latitude: currentLocation.latitude,
-        longitude: currentLocation.longitude,
-      },
-      DESTINATION_COORDINATES,
-    ];
-  }, [currentLocation]);
 
   const handleOpenSettings = useCallback(() => {
     openSettings().catch(() => {
@@ -275,6 +272,70 @@ function AppContent() {
     };
   }, [startLocationUpdates]);
 
+  useEffect(() => {
+    if (!currentLocation) {
+      setRouteCoordinates([]);
+      routeFetchController.current?.abort();
+      routeFetchController.current = null;
+      lastFetchedRouteOrigin.current = null;
+      return;
+    }
+
+    if (
+      lastFetchedRouteOrigin.current &&
+      getDistanceBetweenCoordinates(
+        lastFetchedRouteOrigin.current,
+        currentLocation,
+      ) < 25
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+    routeFetchController.current?.abort();
+    routeFetchController.current = controller;
+
+    const fetchRoute = async () => {
+      try {
+        const response = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${currentLocation.longitude},${currentLocation.latitude};${DESTINATION_COORDINATES.longitude},${DESTINATION_COORDINATES.latitude}?overview=full&geometries=polyline`,
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Route request failed with status ${response.status}`);
+        }
+
+        const data = (await response.json()) as OSRMRouteResponse;
+        const geometry = data.routes?.[0]?.geometry;
+
+        if (!geometry) {
+          return;
+        }
+
+        const decoded = decodePolyline(geometry);
+        if (!controller.signal.aborted) {
+          setRouteCoordinates(decoded);
+          lastFetchedRouteOrigin.current = currentLocation;
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.warn('Failed to fetch driving route', error);
+          lastFetchedRouteOrigin.current = null;
+        }
+      }
+    };
+
+    fetchRoute();
+
+    return () => {
+      controller.abort();
+      if (routeFetchController.current === controller) {
+        routeFetchController.current = null;
+      }
+    };
+  }, [currentLocation]);
+
   const region = useMemo((): Region => {
     if (!currentLocation) {
       return INITIAL_REGION;
@@ -348,12 +409,11 @@ function AppContent() {
             strokeWidth={4}
           />
         )}
-        {destinationRoute.length === 2 && (
+        {routeCoordinates.length > 1 && (
           <Polyline
-            coordinates={destinationRoute}
+            coordinates={routeCoordinates}
             strokeColor="#FF6B6B"
             strokeWidth={3}
-            lineDashPattern={[10, 5]}
           />
         )}
       </MapView>
@@ -399,6 +459,71 @@ async function checkMultipleIOSPermissions() {
   ]);
 
   return statuses;
+}
+
+function getDistanceBetweenCoordinates(
+  first: GeoCoordinates,
+  second: GeoCoordinates,
+) {
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const earthRadius = 6371000; // meters
+
+  const deltaLat = toRadians(second.latitude - first.latitude);
+  const deltaLon = toRadians(second.longitude - first.longitude);
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(toRadians(first.latitude)) *
+      Math.cos(toRadians(second.latitude)) *
+      Math.sin(deltaLon / 2) *
+      Math.sin(deltaLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadius * c;
+}
+
+function decodePolyline(encoded: string) {
+  if (!encoded) {
+    return [];
+  }
+
+  const coordinates: { latitude: number; longitude: number }[] = [];
+  let index = 0;
+  let latitude = 0;
+  let longitude = 0;
+
+  while (index < encoded.length) {
+    let result = 0;
+    let shift = 0;
+    let byte: number;
+
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+
+    const deltaLat = (result & 1) !== 0 ? ~(result >> 1) : result >> 1;
+    latitude += deltaLat;
+
+    result = 0;
+    shift = 0;
+
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+
+    const deltaLng = (result & 1) !== 0 ? ~(result >> 1) : result >> 1;
+    longitude += deltaLng;
+
+    coordinates.push({
+      latitude: latitude / 1e5,
+      longitude: longitude / 1e5,
+    });
+  }
+
+  return coordinates;
 }
 
 const styles = StyleSheet.create({
