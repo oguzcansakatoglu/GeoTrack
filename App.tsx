@@ -83,7 +83,6 @@ function AppContent() {
   const [currentLocation, setCurrentLocation] = useState<GeoCoordinates | null>(
     null,
   );
-  const [locationTrail, setLocationTrail] = useState<GeoCoordinates[]>([]);
   const [routeCoordinates, setRouteCoordinates] = useState<
     { latitude: number; longitude: number }[]
   >([]);
@@ -91,16 +90,7 @@ function AppContent() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const routeFetchController = useRef<AbortController | null>(null);
   const lastFetchedRouteOrigin = useRef<GeoCoordinates | null>(null);
-  const mapRef = useRef<MapView | null>(null);
-  const pathCoordinates = useMemo(
-    () =>
-      locationTrail.map(coords => ({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-      })),
-    [locationTrail],
-  );
-
+ 
   const handleOpenSettings = useCallback(() => {
     openSettings().catch(() => {
       if (Platform.OS === 'ios') {
@@ -203,7 +193,6 @@ function AppContent() {
 
   const handleLocationSuccess = useCallback((coords: GeoCoordinates) => {
     setCurrentLocation(coords);
-    setLocationTrail(previous => [...previous, coords]);
   }, []);
 
   const handleLocationError = useCallback((error: GeolocationError) => {
@@ -402,13 +391,7 @@ function AppContent() {
           description="Torun Center"
           pinColor="#FF6B6B"
         />
-        {pathCoordinates.length > 1 && (
-          <Polyline
-            coordinates={pathCoordinates}
-            strokeColor="#007AFF"
-            strokeWidth={4}
-          />
-        )}
+       
         {routeCoordinates.length > 1 && (
           <Polyline
             coordinates={routeCoordinates}
