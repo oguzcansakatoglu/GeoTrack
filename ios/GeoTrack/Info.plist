@@ -33,8 +33,16 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+        <string>GeoTrack needs access to your location so we can display your position on the map and continue tracking in the background.</string>
+        <key>NSLocationAlwaysUsageDescription</key>
+        <string>GeoTrack keeps tracking your journeys even when the app is in the background.</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>GeoTrack uses your position to show where you are on the map.</string>
+        <key>UIBackgroundModes</key>
+        <array>
+                <string>location</string>
+        </array>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
