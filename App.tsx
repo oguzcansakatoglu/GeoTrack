@@ -53,6 +53,11 @@ const WATCH_OPTIONS: GeolocationOptions = {
   showsBackgroundLocationIndicator: true,
 };
 
+const DESTINATION_COORDINATES: { latitude: number; longitude: number } = {
+  latitude: 41.0655424,
+  longitude: 28.9983691,
+};
+
 type PermissionState = 'pending' | 'granted' | 'blocked';
 
 function App() {
@@ -83,6 +88,20 @@ function AppContent() {
       })),
     [locationTrail],
   );
+
+  const destinationRoute = useMemo(() => {
+    if (!currentLocation) {
+      return [];
+    }
+
+    return [
+      {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      },
+      DESTINATION_COORDINATES,
+    ];
+  }, [currentLocation]);
 
   const handleOpenSettings = useCallback(() => {
     openSettings().catch(() => {
@@ -316,11 +335,25 @@ function AppContent() {
         {currentLocation && (
           <Marker coordinate={currentLocation} title="You" />
         )}
+        <Marker
+          coordinate={DESTINATION_COORDINATES}
+          title="Mock Destination"
+          description="Torun Center"
+          pinColor="#FF6B6B"
+        />
         {pathCoordinates.length > 1 && (
           <Polyline
             coordinates={pathCoordinates}
             strokeColor="#007AFF"
             strokeWidth={4}
+          />
+        )}
+        {destinationRoute.length === 2 && (
+          <Polyline
+            coordinates={destinationRoute}
+            strokeColor="#FF6B6B"
+            strokeWidth={3}
+            lineDashPattern={[10, 5]}
           />
         )}
       </MapView>
@@ -333,6 +366,13 @@ function AppContent() {
             </Text>
             <Text style={styles.infoText}>
               Longitude: {currentLocation.longitude.toFixed(6)}
+            </Text>
+            <Text style={styles.infoText}>
+              Destination: Torun Center
+            </Text>
+            <Text style={styles.infoSubtext}>
+              Mock destination at {DESTINATION_COORDINATES.latitude.toFixed(6)},{' '}
+              {DESTINATION_COORDINATES.longitude.toFixed(6)}.
             </Text>
             <Text style={styles.infoSubtext}>
               Tracking continues while the app runs in the background.
